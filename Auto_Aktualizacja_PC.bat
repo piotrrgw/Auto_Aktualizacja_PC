@@ -7,7 +7,7 @@ color 0A
 powershell -NoProfile -Command "Get-Date | Export-Clixml -Path $env:TEMP\script_start.xml"
 
 :: Ustawienia wersji i repozytorium
-set "LOKALNA_WERSJA=1.1"
+set "LOKALNA_WERSJA=1.0"
 set "GITHUB_URL_RAW=https://raw.githubusercontent.com/piotrrgw/auto_aktualizacja_pc/main/wersja.txt"
 set "GITHUB_REPO_URL=https://github.com/piotrrgw/auto_aktualizacja_pc"
 
@@ -41,12 +41,12 @@ del /q "%temp%\wersja_github.txt" >nul 2>&1
 
 if "%ZDALNA_WERSJA%"=="" (
     echo [ INFO ] Brak polaczenia z GitHubem lub bledny link.
-    goto :START_PROCESU
+    goto :MENU_STEROWNIKI
 )
 
 if "%LOKALNA_WERSJA%"=="%ZDALNA_WERSJA%" (
     echo [ OK ] Posiadasz najnowsza wersje skryptu ^(%LOKALNA_WERSJA%^).
-    goto :START_PROCESU
+    goto :MENU_STEROWNIKI
 )
 
 :: Sekcja jesli wykryto nowsza wersje
@@ -73,7 +73,27 @@ if errorlevel 2 (
 color 0A
 echo [ INFO ] Kontynuowanie pracy z wersja %LOKALNA_WERSJA%...
 
-:START_PROCESU
+:MENU_STEROWNIKI
+echo.
+echo ===================================================
+echo  [ KONFIGURACJA ] AKTUALIZACJA STEROWNIKOW
+echo ===================================================
+echo Czy chcesz zaktualizowac rowniez sterowniki urzadzen?
+echo (Moze to spowodowac chwilowe miganie ekranu lub rozlaczenie sieci)
+echo.
+echo [ T ] Tak, aktualizuj system i sterowniki
+echo [ N ] Nie, aktualizuj tylko system (bezpieczniejsze)
+echo ===================================================
+echo.
+
+choice /c TN /n /m "Wybierz opcje [T,N]: "
+if errorlevel 2 (
+    set "INSTALUJ_STEROWNIKI=NIE"
+    echo [ INFO ] Wybrano aktualizacje BEZ sterownikow.
+) else (
+    set "INSTALUJ_STEROWNIKI=TAK"
+    echo [ INFO ] Wybrano pelna aktualizacje (system + sterowniki).
+)
 echo.
 
 :: ---------------------------------------------------
@@ -111,14 +131,22 @@ echo [ OK ] Proces aktualizacji aplikacji zakonczony.
 echo.
 
 :: ---------------------------------------------------
-:: KROK 3: AKTUALIZACJA WINDOWS I STEROWNIKOW
+:: KROK 3: AKTUALIZACJA WINDOWS
 :: ---------------------------------------------------
 echo ===================================================
-echo  [ 3 / 3 ] AKTUALIZACJA WINDOWS I STEROWNIKOW
+echo  [ 3 / 3 ] AKTUALIZACJA WINDOWS
 echo ===================================================
-echo [ INFO ] (Pierwsze uruchomienie moze potrwac dluzej ze wzgledu na instalacje odpowiednich modulow)
-echo [ TRWA ] Inicjalizacja modulu PSWindowsUpdate i instalacja pakietow...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) { Write-Host '[ TRWA ] Instalacja modulu PSWindowsUpdate...' -ForegroundColor Cyan; Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Install-Module -Name PSWindowsUpdate -Force | Out-Null }; Import-Module PSWindowsUpdate; Write-Host '[ TRWA ] Wyszukiwanie i instalowanie aktualizacji (w tym sterownikow)...' -ForegroundColor Cyan; Add-WUServiceManager -ServiceID 7971f918-a847-4430-9279-4a52d1efe18d -Confirm:$false -ErrorAction SilentlyContinue | Out-Null; Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot; Write-Host '[ OK ] Aktualizacja systemu zakonczona.' -ForegroundColor Green"
+echo [ INFO ] Inicjalizacja modulu PSWindowsUpdate...
+
+:: Przygotowanie parametru dla sterownikow
+set "PS_CRITERIA="
+if "%INSTALUJ_STEROWNIKI%"=="NIE" (
+    set "PS_COMMAND=Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotCategory 'Drivers' -Install"
+) else (
+    set "PS_COMMAND=Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -Install"
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) { Write-Host '[ TRWA ] Instalacja modulu PSWindowsUpdate...' -ForegroundColor Cyan; Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Install-Module -Name PSWindowsUpdate -Force | Out-Null }; Import-Module PSWindowsUpdate; Write-Host '[ TRWA ] Wyszukiwanie i instalowanie aktualizacji...' -ForegroundColor Cyan; Add-WUServiceManager -ServiceID 7971f918-a847-4430-9279-4a52d1efe18d -Confirm:$false -ErrorAction SilentlyContinue | Out-Null; %PS_COMMAND%; Write-Host '[ OK ] Aktualizacja systemu zakonczona.' -ForegroundColor Green"
 color 0A
 echo.
 
@@ -131,8 +159,8 @@ echo ===================================================
 echo Okno zamknie sie automatycznie za 30 sekund...
 timeout /t 30
 
-:: Obliczenie czasu, wyswietlenie czytelnego okna z podsumowaniem i usuniecie pliku z czasem startu
-powershell -WindowStyle Hidden -Command "$start = Import-Clixml -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue; if ($start) { $diff = (Get-Date) - $start; $timeStr = '{0} min. {1} sek.' -f $diff.Minutes, $diff.Seconds } else { $timeStr = 'nieznany (blad pomiaru)' }; $msg = \"Proces aktualizacji zostal pomyslnie zakonczony.`n`nZaktualizowano:`n- Aplikacje zewnetrzne (Winget)`n- Pakiety systemu i opcjonalne sterowniki (Windows Update)`n`nCzas trwania aktualizacji: $timeStr`n`nW celu ukonczenia konfiguracji niektorych urzadzen zalecane jest ponowne uruchomienie komputera w wolnej chwili.\"; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($msg, 'Podsumowanie aktualizacji', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information); Remove-Item -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue"
+:: Obliczenie czasu i wyswietlenie okna
+powershell -WindowStyle Hidden -Command "$start = Import-Clixml -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue; if ($start) { $diff = (Get-Date) - $start; $timeStr = '{0} min. {1} sek.' -f $diff.Minutes, $diff.Seconds } else { $timeStr = 'nieznany' }; $msg = \"Proces aktualizacji zostal zakonczony.`n`nCzas trwania: $timeStr`n`nAktualizacja sterownikow: %INSTALUJ_STEROWNIKI%`n`nZalecane ponowne uruchomienie komputera.\"; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($msg, 'Podsumowanie', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information); Remove-Item -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue"
 
 :: Wersja aplikacji: v1.1
 :: Piotr M 🚂 & Gemini

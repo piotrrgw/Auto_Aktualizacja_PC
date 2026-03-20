@@ -1,34 +1,40 @@
 # Auto Aktualizacja PC 🚂
 
-Profesjonalny skrypt wsadowy (`.bat`) do kompleksowej automatyzacji konserwacji systemów Windows 10 oraz 11. Skrypt łączy potęgę menedżera pakietów **Winget** oraz modułu **PSWindowsUpdate**, aby utrzymać Twój komputer w najwyższej kondycji.
+Profesjonalny skrypt wsadowy (`.bat`) do kompleksowej automatyzacji konserwacji systemów Windows 10 oraz 11. Skrypt łączy potęgę menedżera pakietów **Winget** oraz modułu **PSWindowsUpdate**, aby utrzymać Twój komputer w najwyższej kondycji za pomocą jednego kliknięcia.
 
 ## 🌟 Kluczowe Funkcje
 
-* **Inteligentne Sprawdzanie Wersji:** Przy każdym uruchomieniu skrypt sprawdza na GitHubie, czy dostępna jest nowsza wersja kodu. Jeśli tak – otrzymasz wybór: kontynuacja lub przejście do repozytorium.
-* **Auto-Instalacja Środowiska:** Jeśli Twój system nie posiada narzędzia `winget` lub modułu `PSWindowsUpdate`, skrypt sam je pobierze i skonfiguruje.
-* **Pełna Aktualizacja Softu:** Bezoobsługowo aktualizuje wszystkie aplikacje zainstalowane przez Winget (np. przeglądarki, odtwarzacze, narzędzia).
-* **Głęboka Aktualizacja Systemu i Sterowników:** Dzięki wykorzystaniu PowerShell, skrypt wyszukuje i instaluje nie tylko łatki bezpieczeństwa, ale również **opcjonalne sterowniki urządzeń**.
-* **Pomiar Czasu Pracy:** Po zakończeniu dowiesz się dokładnie, ile minut i sekund zajęła cała operacja.
-* **Interaktywne Podsumowanie:** Po zamknięciu konsoli wyświetlane jest natywne okno systemowe z raportem wykonanych czynności.
+* **Inteligentna Weryfikacja Wersji:** Skrypt automatycznie sprawdza na GitHubie, czy dostępna jest nowsza wersja kodu. Masz wybór: kontynuować pracę lub przejść do repozytorium, by pobrać aktualizację.
+* **Konfigurowalna Aktualizacja Sterowników:** Przed startem decydujesz, czy chcesz zaktualizować tylko system i aplikacje, czy również sterowniki urządzeń (opcja dla zaawansowanych).
+* **Auto-Instalacja Środowiska:** Jeśli Twój system nie posiada narzędzia `winget` lub modułu `PSWindowsUpdate`, skrypt sam je bezpiecznie pobierze i skonfiguruje.
+* **Pełna Aktualizacja Aplikacji:** Bezoobsługowo aktualizuje wszystkie programy wspierane przez Winget (przeglądarki, narzędzia, odtwarzacze).
+* **Zaawansowane Windows Update:** Wykorzystuje PowerShell do instalacji poprawek systemowych oraz sterowników z kanału Microsoft Update.
+* **Profesjonalny Raport Końcowy:** Po zakończeniu pracy wyświetlane jest natywne okno systemowe z podsumowaniem statusu każdego kroku oraz dokładnym czasem trwania operacji.
 
 ## 🚀 Jak używać?
 
 1.  Pobierz plik `Auto_Aktualizacja_PC.bat`.
-2.  Uruchom plik **jako Administrator** (prawy przycisk myszy -> Uruchom jako administrator).
-3.  Wybierz opcję w menu (jeśli pojawi się nowa wersja) i obserwuj postęp w zielonej konsoli.
-4.  Po zakończeniu odczekaj 30 sekund lub naciśnij dowolny klawisz, aby zobaczyć podsumowanie.
+2.  Uruchom plik **jako Administrator** (wymagane do instalacji sterowników i łatek systemowych).
+3.  Postępuj zgodnie z instrukcjami w zielonej konsoli (wybór wersji i zakresu aktualizacji).
+4.  Po zakończeniu przejrzyj raport i zamknij okno.
 
-## 🛠️ Wymagania Techniczne
+## 🛠️ Specyfikacja Techniczna
 
-* **System:** Windows 10 lub Windows 11.
-* **Uprawnienia:** Skrypt wymaga uprawnień administracyjnych do instalacji sterowników i aplikacji.
-* **Internet:** Niezbędny do pobierania aktualizacji i weryfikacji wersji na GitHub.
+* **System:** Windows 10 / 11
+* **Język:** Batch + PowerShell
+* **Zgodność:** Skrypt jest zgodny z wytycznymi **EAA** i **WCAG** (czytelność, standardowe okna komunikatów).
+* **Optymalizacja:** Przygotowany do wyświetlania na ekranach o różnej rozdzielczości (responsywność konsoli).
 
-## 📊 Standardy i Zgodność
+## 📊 Statusy Raportu
 
-* **Dostępność:** Skrypt i jego komunikaty są zgodne z wytycznymi **EAA** i **WCAG** (obsługa przez czytniki ekranu, natywne okna dialogowe).
-* **Responsywność:** Konsola i komunikaty przygotowane pod kątem czytelności na małych ekranach.
+W oknie podsumowania znajdziesz następujące informacje:
+- **Nowa wersja skryptu:** Czy używasz najnowszego kodu.
+- **Środowisko Winget:** Status gotowości menedżera pakietów.
+- **Aktualizacja aplikacji:** Czy proces Winget zakończył się sukcesem.
+- **Aktualizacja systemu:** Status instalacji łatek Windows.
+- **Aktualizacja sterowników:** Informacja o wykonaniu lub pominięciu tego kroku.
 
 ---
 **Autorzy:** [Piotr M 🚂](https://github.com/piotrrgw) & Gemini AI  
-**Wersja aplikacji:** v1.1
+**Wersja aplikacji:** v1.1  
+**Ostatnia aktualizacja:** 20.03.2026

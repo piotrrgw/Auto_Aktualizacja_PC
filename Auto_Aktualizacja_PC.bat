@@ -7,7 +7,7 @@ color 0A
 powershell -NoProfile -Command "Get-Date | Export-Clixml -Path $env:TEMP\script_start.xml"
 
 :: Ustawienia wersji i repozytorium
-set "LOKALNA_WERSJA=1.0"
+set "LOKALNA_WERSJA=1.1"
 set "GITHUB_URL_RAW=https://raw.githubusercontent.com/piotrrgw/auto_aktualizacja_pc/main/wersja.txt"
 set "GITHUB_REPO_URL=https://github.com/piotrrgw/auto_aktualizacja_pc"
 
@@ -65,8 +65,7 @@ echo ===================================================
 echo.
 
 choice /c 12 /n /m "Wybierz opcje [1,2]: "
-
-if errorlevel 2 (
+if %errorlevel% equ 2 (
     start %GITHUB_REPO_URL%
     exit
 )
@@ -81,21 +80,29 @@ echo ===================================================
 echo Czy chcesz zaktualizowac rowniez sterowniki urzadzen?
 echo (Moze to spowodowac chwilowe miganie ekranu lub rozlaczenie sieci)
 echo.
-echo [ T ] Tak, aktualizuj system i sterowniki
-echo [ N ] Nie, aktualizuj tylko system (bezpieczniejsze)
+echo [ 1 ] Tak, aktualizuj system i sterowniki
+echo [ 2 ] Nie, aktualizuj tylko system (bezpieczniejsze)
 echo ===================================================
 echo.
 
-choice /c TN /n /m "Wybierz opcje [T,N]: "
-if errorlevel 2 (
-    set "INSTALUJ_STEROWNIKI=NIE"
-    echo [ INFO ] Wybrano aktualizacje BEZ sterownikow.
-) else (
-    set "INSTALUJ_STEROWNIKI=TAK"
-    echo [ INFO ] Wybrano pelna aktualizacje (system + sterowniki).
-)
-echo.
+choice /c 12 /n /m "Wybierz opcje [1,2]: "
 
+:: Uzywamy skoków (GOTO), aby CMD nie "zgubil sie" po wyborze opcji 2
+if %errorlevel% equ 2 goto :OPCJA_BEZ_STEROWNIKOW
+if %errorlevel% equ 1 goto :OPCJA_ZE_STEROWNIKAMI
+
+:OPCJA_BEZ_STEROWNIKOW
+set "INSTALUJ_STEROWNIKI=NIE"
+echo [ INFO ] Wybrano aktualizacje BEZ sterownikow.
+goto :KROK_WINGET
+
+:OPCJA_ZE_STEROWNIKAMI
+set "INSTALUJ_STEROWNIKI=TAK"
+echo [ INFO ] Wybrano pelna aktualizacje (system + sterowniki).
+goto :KROK_WINGET
+
+:KROK_WINGET
+echo.
 :: ---------------------------------------------------
 :: KROK 0: WERYFIKACJA SRODOWISKA WINGET
 :: ---------------------------------------------------
@@ -138,12 +145,10 @@ echo  [ 3 / 3 ] AKTUALIZACJA WINDOWS
 echo ===================================================
 echo [ INFO ] Inicjalizacja modulu PSWindowsUpdate...
 
-:: Przygotowanie parametru dla sterownikow
-set "PS_CRITERIA="
 if "%INSTALUJ_STEROWNIKI%"=="NIE" (
-    set "PS_COMMAND=Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotCategory 'Drivers' -Install"
+    set "PS_COMMAND=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotCategory 'Drivers'"
 ) else (
-    set "PS_COMMAND=Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -Install"
+    set "PS_COMMAND=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot"
 )
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) { Write-Host '[ TRWA ] Instalacja modulu PSWindowsUpdate...' -ForegroundColor Cyan; Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Install-Module -Name PSWindowsUpdate -Force | Out-Null }; Import-Module PSWindowsUpdate; Write-Host '[ TRWA ] Wyszukiwanie i instalowanie aktualizacji...' -ForegroundColor Cyan; Add-WUServiceManager -ServiceID 7971f918-a847-4430-9279-4a52d1efe18d -Confirm:$false -ErrorAction SilentlyContinue | Out-Null; %PS_COMMAND%; Write-Host '[ OK ] Aktualizacja systemu zakonczona.' -ForegroundColor Green"

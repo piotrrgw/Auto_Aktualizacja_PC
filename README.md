@@ -1,40 +1,61 @@
-# Auto Aktualizacja PC 🚂
+Auto Aktualizacja PC & Mac 🚂
+Profesjonalny zestaw skryptów do kompleksowej automatyzacji konserwacji systemów operacyjnych Windows oraz macOS. Narzędzie pozwala na szybką aktualizację aplikacji oraz systemu za pomocą jednego kliknięcia, oszczędzając czas i dbając o bezpieczeństwo Twojego sprzętu.
 
-Profesjonalny skrypt wsadowy (`.bat`) do kompleksowej automatyzacji konserwacji systemów Windows 10 oraz 11. Skrypt łączy potęgę menedżera pakietów **Winget** oraz modułu **PSWindowsUpdate**, aby utrzymać Twój komputer w najwyższej kondycji za pomocą jednego kliknięcia.
+📥 Wybierz swoją wersję
+System	Plik do pobrania	Główne technologie
+Windows	Auto_Aktualizacja_WINDOWS.bat	Winget, PSWindowsUpdate, PowerShell
+macOS	Auto_Aktualizacja_Mac.sh	Homebrew, softwareupdate, Zsh
+🌟 Kluczowe Funkcje
+Inteligentna Weryfikacja Wersji: Skrypty automatycznie sprawdzają na GitHubie dostępność nowszej wersji kodu przed startem procesu.
 
-## 🌟 Kluczowe Funkcje
+Konfigurowalna Aktualizacja: Możliwość wyboru zakresu prac (np. aktualizacja samych aplikacji lub pełny przegląd wraz ze sterownikami/systemem).
 
-* **Inteligentna Weryfikacja Wersji:** Skrypt automatycznie sprawdza na GitHubie, czy dostępna jest nowsza wersja kodu. Masz wybór: kontynuować pracę lub przejść do repozytorium, by pobrać aktualizację.
-* **Konfigurowalna Aktualizacja Sterowników:** Przed startem decydujesz, czy chcesz zaktualizować tylko system i aplikacje, czy również sterowniki urządzeń (opcja dla zaawansowanych).
-* **Auto-Instalacja Środowiska:** Jeśli Twój system nie posiada narzędzia `winget` lub modułu `PSWindowsUpdate`, skrypt sam je bezpiecznie pobierze i skonfiguruje.
-* **Pełna Aktualizacja Aplikacji:** Bezoobsługowo aktualizuje wszystkie programy wspierane przez Winget (przeglądarki, narzędzia, odtwarzacze).
-* **Zaawansowane Windows Update:** Wykorzystuje PowerShell do instalacji poprawek systemowych oraz sterowników z kanału Microsoft Update.
-* **Profesjonalny Raport Końcowy:** Po zakończeniu pracy wyświetlane jest natywne okno systemowe z podsumowaniem statusu każdego kroku oraz dokładnym czasem trwania operacji.
+Auto-Instalacja Środowiska: Jeśli Twój system nie posiada menedżerów pakietów (Winget / Homebrew), skrypty same je pobiorą i skonfigurują.
 
-## 🚀 Jak używać?
+Pełna Aktualizacja Softu: Bezoobsługowe odświeżanie przeglądarek, komunikatorów i narzędzi (Chrome, Spotify, Adobe Reader, Discord itp.).
 
-1.  Pobierz plik `Auto_Aktualizacja_PC.bat`.
-2.  Uruchom plik **jako Administrator** (wymagane do instalacji sterowników i łatek systemowych).
-3.  Postępuj zgodnie z instrukcjami w zielonej konsoli (wybór wersji i zakresu aktualizacji).
-4.  Po zakończeniu przejrzyj raport i zamknij okno.
+Profesjonalne Raporty: Po zakończeniu pracy wyświetlane jest natywne okno systemowe (MessageBox / Dialog) z podsumowaniem statusu oraz dokładnym czasem trwania operacji.
 
-## 🛠️ Specyfikacja Techniczna
+🚀 Instrukcja uruchomienia
+🟦 Windows
 
-* **System:** Windows 10 / 11
-* **Język:** Batch + PowerShell
-* **Zgodność:** Skrypt jest zgodny z wytycznymi **EAA** i **WCAG** (czytelność, standardowe okna komunikatów).
-* **Optymalizacja:** Przygotowany do wyświetlania na ekranach o różnej rozdzielczości (responsywność konsoli).
+Pobierz plik Auto_Aktualizacja_WINDOWS.bat.
 
-## 📊 Statusy Raportu
+Kliknij na niego Prawym Przyciskiem Myszy i wybierz "Uruchom jako administrator".
 
-W oknie podsumowania znajdziesz następujące informacje:
-- **Nowa wersja skryptu:** Czy używasz najnowszego kodu.
-- **Środowisko Winget:** Status gotowości menedżera pakietów.
-- **Aktualizacja aplikacji:** Czy proces Winget zakończył się sukcesem.
-- **Aktualizacja systemu:** Status instalacji łatek Windows.
-- **Aktualizacja sterowników:** Informacja o wykonaniu lub pominięciu tego kroku.
+Postępuj zgodnie z instrukcjami w zielonej konsoli (wybór opcji 1 lub 2).
 
----
-**Autorzy:** [Piotr M 🚂](https://github.com/piotrrgw) & Gemini AI  
-**Wersja aplikacji:** v1.1  
-**Ostatnia aktualizacja:** 20.03.2026
+🍎 macOS
+
+Pobierz plik Auto_Aktualizacja_Mac.sh.
+
+Otwórz Terminal i nadaj uprawnienia do wykonywania pliku (tylko raz):
+chmod +x Auto_Aktualizacja_Mac.sh
+
+Uruchom skrypt (UWAGA: Nie używaj sudo na starcie):
+./Auto_Aktualizacja_Mac.sh
+Skrypt sam poprosi o hasło administratora w odpowiednim momencie (podczas aktualizacji systemu).
+
+🛠️ Specyfikacja i Standardy
+Zgodność EAA & WCAG: Komunikaty są czytelne, a skrypt wspiera standardowe ułatwienia dostępu (czytniki ekranu, natywne okna dialogowe).
+
+Responsywność: Interfejs konsoli dostosowany do różnych rozdzielczości ekranu.
+
+Bezpieczeństwo: Skrypty korzystają wyłącznie z oficjalnych repozytoriów producentów (Microsoft, Apple, Homebrew).
+
+📊 Co zawiera raport końcowy?
+Po zakończeniu pracy otrzymasz przejrzyste okno z informacjami o:
+
+Statusie aktualności samego skryptu.
+
+Gotowości środowiska (Winget/Brew).
+
+Wyniku aktualizacji aplikacji i systemu.
+
+Łącznym czasie trwania procesu.
+
+Autorzy: Piotr M 🚂 & Gemini AI
+
+Wersja zestawu: v1.1
+
+Ostatnia aktualizacja: 20.03.2026

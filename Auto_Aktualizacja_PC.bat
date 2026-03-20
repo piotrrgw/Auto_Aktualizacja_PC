@@ -1,4 +1,6 @@
 @echo off
+setlocal enabledelayedexpansion
+:: Ustawienie koloru na starcie
 color 0A
 
 :: ---------------------------------------------------
@@ -11,6 +13,13 @@ set "LOKALNA_WERSJA=1.1"
 set "GITHUB_URL_RAW=https://raw.githubusercontent.com/piotrrgw/auto_aktualizacja_pc/main/wersja.txt"
 set "GITHUB_REPO_URL=https://github.com/piotrrgw/auto_aktualizacja_pc"
 
+:: Statusy domyslne
+set "STAT_WINGET=Oczekiwanie..."
+set "STAT_APPS=Oczekiwanie..."
+set "STAT_SYS=Oczekiwanie..."
+set "STAT_DRV=Pominieto"
+set "STAT_NEW_VER=Sprawdzanie..."
+
 :: ---------------------------------------------------
 :: SPRAWDZANIE UPRAWNIEN ADMINISTRATORA
 :: ---------------------------------------------------
@@ -19,9 +28,9 @@ if errorlevel 1 (
     color 0C
     echo ===================================================
     echo [ BLAD ] Brak uprawnien administratora!
-    echo          Kliknij ten plik prawym przyciskiem myszy
-    echo          i wybierz "Uruchom jako administrator".
+    echo          Uruchom jako administrator.
     echo ===================================================
+    echo.
     pause
     exit
 )
@@ -40,132 +49,113 @@ set /p ZDALNA_WERSJA=<"%temp%\wersja_github.txt"
 del /q "%temp%\wersja_github.txt" >nul 2>&1
 
 if "%ZDALNA_WERSJA%"=="" (
-    echo [ INFO ] Brak polaczenia z GitHubem lub bledny link.
+    set "STAT_NEW_VER=Blad polaczenia"
+    echo [ INFO ] Brak polaczenia z GitHubem.
+    echo.
     goto :MENU_STEROWNIKI
 )
 
 if "%LOKALNA_WERSJA%"=="%ZDALNA_WERSJA%" (
-    echo [ OK ] Posiadasz najnowsza wersje skryptu ^(%LOKALNA_WERSJA%^).
+    set "STAT_NEW_VER=Aktualna (v%LOKALNA_WERSJA%)"
+    echo [ OK ] Posiadasz najnowsza wersje skryptu.
+    echo.
     goto :MENU_STEROWNIKI
 )
 
-:: Sekcja jesli wykryto nowsza wersje
+set "STAT_NEW_VER=Dostepna v%ZDALNA_WERSJA%"
 color 0E
-echo.
 echo ===================================================
-echo [ UWAGA ] DOSTEPNA JEST NOWA WERSJA SKRYPTU!
+echo [ UWAGA ] DOSTEPNA JEST NOWA WERSJA SKRYPTU! (v%ZDALNA_WERSJA%)
 echo ===================================================
-echo Wersja lokalna: %LOKALNA_WERSJA%
-echo Wersja zdalna:  %ZDALNA_WERSJA%
-echo.
-echo Co chcesz zrobic?
-echo [ 1 ] Kontynuuj aktualizacje przy uzyciu obecnej wersji
-echo [ 2 ] Otworz GitHuba i pobierz nowa wersje (zamyka skrypt)
+echo [ 1 ] Kontynuuj aktualizacje (obecna wersja)
+echo [ 2 ] Otworz GitHuba i zakoncz
 echo ===================================================
 echo.
-
-choice /c 12 /n /m "Wybierz opcje [1,2]: "
-if %errorlevel% equ 2 (
+choice /c 12 /n /m "Wybor: "
+if errorlevel 2 (
     start %GITHUB_REPO_URL%
     exit
 )
 color 0A
 echo [ INFO ] Kontynuowanie pracy z wersja %LOKALNA_WERSJA%...
+echo.
 
 :MENU_STEROWNIKI
-echo.
+color 0A
 echo ===================================================
 echo  [ KONFIGURACJA ] AKTUALIZACJA STEROWNIKOW
 echo ===================================================
-echo Czy chcesz zaktualizowac rowniez sterowniki urzadzen?
-echo (Moze to spowodowac chwilowe miganie ekranu lub rozlaczenie sieci)
-echo.
-echo [ 1 ] Tak, aktualizuj system i sterowniki
-echo [ 2 ] Nie, aktualizuj tylko system (bezpieczniejsze)
+echo Czy chcesz aktualizowac rowniez sterowniki?
+echo [ 1 ] TAK (Pelna aktualizacja [APLIKACJE + SYSTEM + STEROWNIKI])
+echo [ 2 ] NIE (Tylko system - bezpieczniej [APLIKACJE + SYSTEM])
 echo ===================================================
 echo.
+choice /c 12 /n /m "Wybor: "
 
-choice /c 12 /n /m "Wybierz opcje [1,2]: "
-
-:: Uzywamy skoków (GOTO), aby CMD nie "zgubil sie" po wyborze opcji 2
-if %errorlevel% equ 2 goto :OPCJA_BEZ_STEROWNIKOW
-if %errorlevel% equ 1 goto :OPCJA_ZE_STEROWNIKAMI
-
-:OPCJA_BEZ_STEROWNIKOW
-set "INSTALUJ_STEROWNIKI=NIE"
-echo [ INFO ] Wybrano aktualizacje BEZ sterownikow.
-goto :KROK_WINGET
-
-:OPCJA_ZE_STEROWNIKAMI
-set "INSTALUJ_STEROWNIKI=TAK"
-echo [ INFO ] Wybrano pelna aktualizacje (system + sterowniki).
-goto :KROK_WINGET
-
-:KROK_WINGET
+if errorlevel 2 (
+    set "INSTALUJ_STEROWNIKI=NIE"
+    set "STAT_DRV=Pominieto"
+    echo [ INFO ] Wybrano aktualizacje BEZ sterownikow.
+) else (
+    set "INSTALUJ_STEROWNIKI=TAK"
+    set "STAT_DRV=Zainstalowano"
+    echo [ INFO ] Wybrano pelna aktualizacje.
+)
 echo.
-:: ---------------------------------------------------
-:: KROK 0: WERYFIKACJA SRODOWISKA WINGET
-:: ---------------------------------------------------
+
+:: --- KROK 0: WINGET ---
+color 0A
 echo ===================================================
 echo  [ INFO ] WERYFIKACJA SRODOWISKA WINGET
 echo ===================================================
-powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Write-Host '[ TRWA ] Pobieranie i instalacja Winget (AppInstaller)...' -ForegroundColor Cyan; $url = 'https://github.com/microsoft/winget-cli/releases/latest/download/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'; $dest = \"$env:TEMP\winget.msixbundle\"; Invoke-WebRequest -Uri $url -OutFile $dest; Add-AppxPackage -Path $dest; Write-Host '[ OK ] Winget zostal pomyslnie zainstalowany.' -ForegroundColor Green } else { Write-Host '[ OK ] Winget jest zainstalowany i gotowy do dzialania.' -ForegroundColor Green }"
-color 0A
+powershell -NoProfile -Command "if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { exit 1 } else { exit 0 }"
+if %errorlevel% equ 0 (
+    set "STAT_WINGET=OK (Zainstalowany)"
+) else (
+    echo [ TRWA ] Instalacja Winget...
+    powershell -NoProfile -Command "$url='https://github.com/microsoft/winget-cli/releases/latest/download/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle'; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\winget.msixbundle\"; Add-AppxPackage -Path \"$env:TEMP\winget.msixbundle\""
+    set "STAT_WINGET=Zainstalowano teraz"
+)
+echo [ OK ] Status: %STAT_WINGET%
 echo.
 
-:: ---------------------------------------------------
-:: KROK 1: ODSWIEZANIE REPOZYTORIOW
-:: ---------------------------------------------------
-echo ===================================================
-echo  [ 1 / 3 ] ODSWIEZANIE LIST REPOZYTORIOW (WINGET)
-echo ===================================================
-echo [ TRWA ] Pobieranie najnowszych informacji o pakietach...
-winget source update
+:: --- KROK 1: APKI ---
 color 0A
-echo [ OK ] Repozytoria zostaly zaktualizowane.
-echo.
-
-:: ---------------------------------------------------
-:: KROK 2: AKTUALIZACJA APLIKACJI
-:: ---------------------------------------------------
 echo ===================================================
-echo  [ 2 / 3 ] BEZOBSLUGOWA AKTUALIZACJA APLIKACJI
+echo  [ 1 / 2 ] AKTUALIZACJA APLIKACJI (WINGET)
 echo ===================================================
-echo [ TRWA ] Instalacja dostepnych aktualizacji programow...
+winget source update >nul
 winget upgrade --all --include-unknown --accept-package-agreements --accept-source-agreements --silent
-color 0A
+set "STAT_APPS=Zakonczono"
 echo [ OK ] Proces aktualizacji aplikacji zakonczony.
 echo.
 
-:: ---------------------------------------------------
-:: KROK 3: AKTUALIZACJA WINDOWS
-:: ---------------------------------------------------
+:: --- KROK 2: WINDOWS UPDATE ---
+color 0A
 echo ===================================================
-echo  [ 3 / 3 ] AKTUALIZACJA WINDOWS
+echo  [ 2 / 2 ] AKTUALIZACJA SYSTEMU WINDOWS
 echo ===================================================
-echo [ INFO ] Inicjalizacja modulu PSWindowsUpdate...
-
+echo [ TRWA ] Inicjalizacja Windows Update...
 if "%INSTALUJ_STEROWNIKI%"=="NIE" (
-    set "PS_COMMAND=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotCategory 'Drivers'"
+    set "PS_CMD=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot -NotCategory 'Drivers'"
 ) else (
-    set "PS_COMMAND=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot"
+    set "PS_CMD=Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot"
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) { Write-Host '[ TRWA ] Instalacja modulu PSWindowsUpdate...' -ForegroundColor Cyan; Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Install-Module -Name PSWindowsUpdate -Force | Out-Null }; Import-Module PSWindowsUpdate; Write-Host '[ TRWA ] Wyszukiwanie i instalowanie aktualizacji...' -ForegroundColor Cyan; Add-WUServiceManager -ServiceID 7971f918-a847-4430-9279-4a52d1efe18d -Confirm:$false -ErrorAction SilentlyContinue | Out-Null; %PS_COMMAND%; Write-Host '[ OK ] Aktualizacja systemu zakonczona.' -ForegroundColor Green"
-color 0A
+powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-Module -ListAvailable -Name PSWindowsUpdate)) { Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Install-Module -Name PSWindowsUpdate -Force | Out-Null }; Import-Module PSWindowsUpdate; Add-WUServiceManager -ServiceID 7971f918-a847-4430-9279-4a52d1efe18d -Confirm:$false -ErrorAction SilentlyContinue | Out-Null; %PS_CMD%"
+set "STAT_SYS=OK"
+echo [ OK ] Aktualizacja systemu zakonczona.
 echo.
 
-:: ---------------------------------------------------
-:: PODSUMOWANIE I ZAKONCZENIE
-:: ---------------------------------------------------
+:: --- FINALIZACJA ---
+color 0A
 echo ===================================================
 echo  [ OK ] ZAKONCZONO WSZYSTKIE PROCESY
 echo ===================================================
-echo Okno zamknie sie automatycznie za 30 sekund...
+echo.
 timeout /t 30
 
-:: Obliczenie czasu i wyswietlenie okna
-powershell -WindowStyle Hidden -Command "$start = Import-Clixml -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue; if ($start) { $diff = (Get-Date) - $start; $timeStr = '{0} min. {1} sek.' -f $diff.Minutes, $diff.Seconds } else { $timeStr = 'nieznany' }; $msg = \"Proces aktualizacji zostal zakonczony.`n`nCzas trwania: $timeStr`n`nAktualizacja sterownikow: %INSTALUJ_STEROWNIKI%`n`nZalecane ponowne uruchomienie komputera.\"; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($msg, 'Podsumowanie', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information); Remove-Item -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue"
+:: Raport graficzny (poprawiona skladnia)
+powershell -WindowStyle Hidden -Command "$start = Import-Clixml -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue; $diff = (Get-Date) - $start; $timeStr = \"$($diff.Minutes) min. $($diff.Seconds) sek.\"; $msg = \"RAPORT AKTUALIZACJI PC`n====================================`n`n- Nowa wersja skryptu: %STAT_NEW_VER%`n- Srodowisko Winget: %STAT_WINGET%`n- Aktualizacja aplikacji: %STAT_APPS%`n- Aktualizacja systemu: %STAT_SYS%`n- Aktualizacja sterownikow: %STAT_DRV%`n`n====================================`n LACZNY CZAS: $timeStr`n====================================`n`nZalecane ponowne uruchomienie komputera.\"; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($msg, 'Podsumowanie', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information); Remove-Item -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue"
 
-:: Wersja aplikacji: v1.1
-:: Piotr M 🚂 & Gemini
+:: Footer: Piotr M 🚂 & Gemini | Wersja aplikacji: v1.1

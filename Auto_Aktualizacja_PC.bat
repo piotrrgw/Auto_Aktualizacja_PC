@@ -6,9 +6,10 @@ color 0A
 :: ---------------------------------------------------
 powershell -NoProfile -Command "Get-Date | Export-Clixml -Path $env:TEMP\script_start.xml"
 
-:: Ustawienia wersji skryptu (do weryfikacji z GitHubem)
+:: Ustawienia wersji i repozytorium
 set "LOKALNA_WERSJA=1.1"
-set "GITHUB_URL=https://raw.githubusercontent.com/piotrrgw/auto_aktualizacja_pc/main/wersja.txt"
+set "GITHUB_URL_RAW=https://raw.githubusercontent.com/piotrrgw/auto_aktualizacja_pc/main/wersja.txt"
+set "GITHUB_REPO_URL=https://github.com/piotrrgw/auto_aktualizacja_pc"
 
 :: ---------------------------------------------------
 :: SPRAWDZANIE UPRAWNIEN ADMINISTRATORA
@@ -34,29 +35,45 @@ echo.
 :: WERYFIKACJA WERSJI SKRYPTU NA GITHUB
 :: ---------------------------------------------------
 echo [ INFO ] Sprawdzanie dostepnosci nowszej wersji skryptu...
-curl -s "%GITHUB_URL%" > "%temp%\wersja_github.txt"
+curl -s "%GITHUB_URL_RAW%" > "%temp%\wersja_github.txt"
 set /p ZDALNA_WERSJA=<"%temp%\wersja_github.txt"
 del /q "%temp%\wersja_github.txt" >nul 2>&1
 
 if "%ZDALNA_WERSJA%"=="" (
     echo [ INFO ] Brak polaczenia z GitHubem lub bledny link.
-) else if not "%LOKALNA_WERSJA%"=="%ZDALNA_WERSJA%" (
-    color 0E
-    echo.
-    echo ===================================================
-    echo [ UWAGA ] DOSTEPNA JEST NOWA WERSJA SKRYPTU!
-    echo ===================================================
-    echo Wersja lokalna: %LOKALNA_WERSJA%
-    echo Wersja zdalna:  %ZDALNA_WERSJA%
-    echo.
-    echo Pobierz najnowsza wersje z repozytorium na GitHubie.
-    echo ===================================================
-    echo.
-    pause
-    color 0A
-) else (
-    echo [ OK ] Posiadasz najnowsza wersje skryptu ^(%LOKALNA_WERSJA%^).
+    goto :START_PROCESU
 )
+
+if "%LOKALNA_WERSJA%"=="%ZDALNA_WERSJA%" (
+    echo [ OK ] Posiadasz najnowsza wersje skryptu ^(%LOKALNA_WERSJA%^).
+    goto :START_PROCESU
+)
+
+:: Sekcja jesli wykryto nowsza wersje
+color 0E
+echo.
+echo ===================================================
+echo [ UWAGA ] DOSTEPNA JEST NOWA WERSJA SKRYPTU!
+echo ===================================================
+echo Wersja lokalna: %LOKALNA_WERSJA%
+echo Wersja zdalna:  %ZDALNA_WERSJA%
+echo.
+echo Co chcesz zrobic?
+echo [ 1 ] Kontynuuj aktualizacje przy uzyciu obecnej wersji
+echo [ 2 ] Otworz GitHuba i pobierz nowa wersje (zamyka skrypt)
+echo ===================================================
+echo.
+
+choice /c 12 /n /m "Wybierz opcje [1,2]: "
+
+if errorlevel 2 (
+    start %GITHUB_REPO_URL%
+    exit
+)
+color 0A
+echo [ INFO ] Kontynuowanie pracy z wersja %LOKALNA_WERSJA%...
+
+:START_PROCESU
 echo.
 
 :: ---------------------------------------------------
@@ -116,3 +133,6 @@ timeout /t 30
 
 :: Obliczenie czasu, wyswietlenie czytelnego okna z podsumowaniem i usuniecie pliku z czasem startu
 powershell -WindowStyle Hidden -Command "$start = Import-Clixml -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue; if ($start) { $diff = (Get-Date) - $start; $timeStr = '{0} min. {1} sek.' -f $diff.Minutes, $diff.Seconds } else { $timeStr = 'nieznany (blad pomiaru)' }; $msg = \"Proces aktualizacji zostal pomyslnie zakonczony.`n`nZaktualizowano:`n- Aplikacje zewnetrzne (Winget)`n- Pakiety systemu i opcjonalne sterowniki (Windows Update)`n`nCzas trwania aktualizacji: $timeStr`n`nW celu ukonczenia konfiguracji niektorych urzadzen zalecane jest ponowne uruchomienie komputera w wolnej chwili.\"; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($msg, 'Podsumowanie aktualizacji', 'OK', [System.Windows.Forms.MessageBoxIcon]::Information); Remove-Item -Path \"$env:TEMP\script_start.xml\" -ErrorAction SilentlyContinue"
+
+:: Wersja aplikacji: v1.1
+:: Piotr M 🚂 & Gemini
